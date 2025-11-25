@@ -131,6 +131,9 @@ console.log("Formatted movie to insert:", formattedMovie);
 });
 
 
+
+
+
 app.get("/liked-movies/:email", (req, res) => {
   const { email } = req.params;
   console.log("Fetching liked movies for email:", email);
