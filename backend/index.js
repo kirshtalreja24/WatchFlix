@@ -41,6 +41,7 @@ db.connect(err => {
   console.log("Connected to MySQL database");
 });
 
+
 // Signup route
 app.post("/signup", (req, res) => {
   const { email, password } = req.body;

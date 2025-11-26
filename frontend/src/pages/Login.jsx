@@ -28,7 +28,7 @@ function Login() {
       setMessage(res.data.message);
       // Optionally save user info in localStorage
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      navigate("/");
+      navigate("/home");
     } catch (err) {
       setMessage(err.response?.data?.message || "Login failed");
     }

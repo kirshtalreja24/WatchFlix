@@ -5,28 +5,66 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Player from "./pages/Player";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Movies from "./pages/Movies"
+import Movies from "./pages/Movies";
 import TVShows from "./pages/TVShows";
 import UserListedMovies from "./pages/UserListedMovies";
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+
+        {/* PUBLIC ROUTES */}
+        <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/player" element={<Player />} />
-        <Route path="/movies" element={<Movies />} />
-        <Route path="/tv" element={<TVShows />} />
-        <Route path="/mylist" element={<UserListedMovies />} />
-  
+
+        {/* PROTECTED ROUTES */}
         <Route
-          path="/"
+          path="/home"
           element={
             <ProtectedRoute>
               <Netflix />
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/movies"
+          element={
+            <ProtectedRoute>
+              <Movies />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tv"
+          element={
+            <ProtectedRoute>
+              <TVShows />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mylist"
+          element={
+            <ProtectedRoute>
+              <UserListedMovies />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/player"
+          element={
+            <ProtectedRoute>
+              <Player />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );
