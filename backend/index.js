@@ -242,17 +242,6 @@ async function populatePopularMovies() {
     console.error("Error populating popular movies:", err);
   }
 }
-
-// Call it once after DB connection
-db.connect(async (err) => {
-  if (err) {
-    console.error("DB connection error:", err);
-    return;
-  }
-  console.log("Connected to MySQL database");
-
-  await populatePopularMovies(); // populate the table
-});
 app.get("/popular-movies", (req, res) => {
   const query = "SELECT * FROM popular_movies";
 
@@ -313,5 +302,83 @@ app.get("/subscription/:userId", (req, res) => {
     res.json(subscription);
   });
 });
+
+
+
+
+async function populateTopRatedMovies() {
+  try {
+    const response = await axios.get(
+      `https://api.themoviedb.org/3/discover/movie`, {
+        params: {
+          api_key: TMDB_API_KEY,
+          include_adult: false,
+          include_video: false,
+          language: "en-US",
+          page: 1,
+          sort_by: "vote_average.desc",
+          without_genres: "99,10755",
+          "vote_count.gte": 200
+        }
+      }
+    );
+
+    const movies = response.data.results;
+    const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
+
+    
+
+    const insertQuery = `
+      INSERT INTO top_rated_movies (id, title, image, genres, vote_average)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+
+    for (const movie of movies) {
+      const image = movie.poster_path ? IMAGE_BASE_URL + movie.poster_path : "";
+      const genres = movie.genre_ids ? movie.genre_ids.join(",") : "";
+      await db.promise().query(insertQuery, [movie.id, movie.title, image, genres, movie.vote_average]);
+    }
+
+    console.log("Top rated movies table populated successfully!");
+  } catch (err) {
+    console.error("Error populating top rated movies:", err);
+  }
+}
+app.get("/top-rated-movies", (req, res) => {
+  const query = "SELECT * FROM top_rated_movies ORDER BY vote_average DESC LIMIT 20";
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).json({ error: "DB error", err });
+
+    const formatted = results.map((movie) => ({
+      ...movie,
+      genres: movie.genres ? movie.genres.split(",").map((g) => g.trim()) : [],
+    }));
+
+    res.json(formatted);
+  });
+});
+
+
+
+// Populate top rated movies
+
+
+// Call once after DB connection
+// Your existing db.connect() at the top
+db.connect(async (err) => {
+  if (err) {
+    console.error("DB connection error:", err);
+    return;
+  }
+  console.log("Connected to MySQL database");
+
+  // Populate popular movies (if you have that)
+  await populatePopularMovies();
+
+  // Populate top rated movies
+  await populateTopRatedMovies();
+});
+
+
 
 

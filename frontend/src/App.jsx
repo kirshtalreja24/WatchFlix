@@ -10,6 +10,7 @@ import TVShows from "./pages/TVShows";
 import UserListedMovies from "./pages/UserListedMovies";
 import Popular from "./pages/Popular";
 import Payment from "./pages/Payment";
+import TopRated from "./pages/Toprated";
 
 
 function App() {
@@ -86,6 +87,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+         path="/toprated"
+         element={
+           <ProtectedRoute>
+            <TopRated />
+         </ProtectedRoute>
+          }
+        />
+
+
+     
+
 
       </Routes>
     </BrowserRouter>

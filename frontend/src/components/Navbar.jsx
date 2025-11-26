@@ -24,6 +24,7 @@ export default function Navbar({ isScrolled }) {
     { name: "My List", link: "/mylist" },
     { name: "Popular", link: "/popular" },
     { name: "Payment", link: "/payment" },
+    { name: "Top Rated", link:"/toprated"},
   ];
 
 const handleSignOut = async () => {
