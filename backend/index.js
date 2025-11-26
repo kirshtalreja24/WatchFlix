@@ -34,13 +34,7 @@ const db = mysql.createConnection({
   port: 3306,
 });
 
-db.connect(err => {
-  if (err) {
-    console.error("DB connection error:", err);
-    return;
-  }
-  console.log("Connected to MySQL database");
-});
+
 
 
 // Signup route
@@ -259,6 +253,28 @@ app.get("/popular-movies", (req, res) => {
   });
 });
 // Subscribe route
+app.get("/plans", (req, res) => {
+  const plans = [
+    {
+      plan: "Standard",
+      price: 9.99,
+      benefits: ["HD streaming", "1 device", "Basic Support"]
+    },
+    {
+      plan: "Premium",
+      price: 14.99,
+      benefits: ["Full HD", "2 devices", "Priority Support"]
+    },
+    {
+      plan: "VIP",
+      price: 19.99,
+      benefits: ["4K Ultra HD", "4 devices", "24/7 Support"]
+    }
+  ];
+
+  res.json(plans);
+});
+
 app.post("/subscribe", (req, res) => {
   const { userId, plan, price, benefits } = req.body;
   if (!userId || !plan || !price || !benefits)
@@ -331,6 +347,7 @@ async function populateTopRatedMovies() {
     const insertQuery = `
       INSERT INTO top_rated_movies (id, title, image, genres, vote_average)
       VALUES (?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE title = VALUES(title), image = VALUES(image), genres = VALUES(genres), vote_average = VALUES(vote_average)
     `;
 
     for (const movie of movies) {
