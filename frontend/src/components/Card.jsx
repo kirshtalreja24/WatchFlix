@@ -10,6 +10,8 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { getUsersLikedMovies, removeMovieFromLiked } from "../store";
 import video from "../assets/video.mp4";
+import { FaRegCommentDots } from "react-icons/fa";
+
 
 export default React.memo(function Card({ index, movieData, isLiked = false }) {
   const navigate = useNavigate();
@@ -91,23 +93,32 @@ export default React.memo(function Card({ index, movieData, isLiked = false }) {
               {movieData.name}
             </h3>
             <div className="icons flex j-between">
-              <div className="controls flex">
-                <IoPlayCircleSharp
-                  title="Play"
-                  onClick={() => navigate("/player")}
-                />
-                <RiThumbUpFill title="Like" />
-                <RiThumbDownFill title="Dislike" />
-                {isLiked ? (
-                  <BsCheck title="Remove from List" onClick={removeFromList} />
-                ) : (
-                  <AiOutlinePlus title="Add to my list" onClick={addToList} />
-                )}
-              </div>
-              <div className="info">
-                <BiChevronDown title="More Info" />
-              </div>
-            </div>
+  <div className="controls flex">
+    <IoPlayCircleSharp
+      title="Play"
+      onClick={() => navigate("/player")}
+    />
+    <RiThumbUpFill title="Like" />
+    <RiThumbDownFill title="Dislike" />
+
+    {/* ⭐ NEW — Reviews Button */}
+    <FaRegCommentDots
+      title="Reviews"
+      onClick={() => navigate(`/reviews/${movieData.id}`)}
+    />
+
+    {isLiked ? (
+      <BsCheck title="Remove from List" onClick={removeFromList} />
+    ) : (
+      <AiOutlinePlus title="Add to my list" onClick={addToList} />
+    )}
+  </div>
+
+  <div className="info">
+    <BiChevronDown title="More Info" />
+  </div>
+</div>
+
             <div className="genres flex">
               <ul className="flex">
                 {movieData.genres.map((genre) => (

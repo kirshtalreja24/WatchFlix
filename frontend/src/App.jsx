@@ -11,7 +11,8 @@ import UserListedMovies from "./pages/UserListedMovies";
 import Popular from "./pages/Popular";
 import Payment from "./pages/Payment";
 import TopRated from "./pages/Toprated";
-
+import Reviews from "./pages/Reviews";
+import ReviewsPage from "./pages/Reviewspage";
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+          <Route path="/reviews" element={<ReviewsPage />} />
 
         <Route
           path="/player"
@@ -77,6 +79,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/reviews/:movieId"
+          element={
+            <ProtectedRoute>
+             <Reviews />
+          </ProtectedRoute>
+          }
+          />
 
         
         <Route

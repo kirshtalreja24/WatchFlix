@@ -376,8 +376,92 @@ app.get("/top-rated-movies", (req, res) => {
 });
 
 
+const populateReviewsForMovies = async (movies) => {
+  const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
-// Populate top rated movies
+  for (const movie of movies) {
+    try {
+      const response = await axios.get(
+        `https://api.themoviedb.org/3/movie/${movie.id}/reviews`,
+        {
+          params: {
+            api_key: TMDB_API_KEY,
+            language: "en-US",
+            page: 1
+          }
+        }
+      );
+
+      const reviews = response.data.results;
+
+      if (!reviews || reviews.length === 0) continue;
+
+      for (const r of reviews) {
+        const insertQuery = `
+          INSERT INTO reviews (id, movie_id, author, content, rating)
+          VALUES (?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE content = VALUES(content), rating = VALUES(rating)
+        `;
+        await db.promise().query(insertQuery, [
+          r.id,
+          movie.id,
+          r.author,
+          r.content,
+          r.author_details?.rating ?? null
+        ]);
+      }
+
+      console.log(`Inserted ${reviews.length} reviews for movie ID ${movie.id}`);
+    } catch (err) {
+      console.error(`Error fetching reviews for movie ${movie.id}:`, err);
+    }
+  }
+};
+
+// Function to fetch reviews for a list of movies and insert into MySQL
+
+app.get("/reviews/:movieId", (req, res) => {
+  const { movieId } = req.params;
+
+  const query = "SELECT id, author, content, rating FROM reviews WHERE movie_id = ?";
+  db.query(query, [movieId], (err, results) => {
+    if (err) {
+      console.error("DB error fetching reviews:", err);
+      return res.json([]);
+    }
+
+    if (results.length === 0) {
+      console.log(`No reviews found for movieId ${movieId}`);
+    } else {
+      console.log(`Fetched ${results.length} reviews for movieId ${movieId}`);
+    }
+
+    res.json(results);
+  });
+});
+// Fetch movies that have reviews
+// Fetch movies that have at least one review
+app.get("/movies-with-reviews", (req, res) => {
+  const query = `
+    SELECT DISTINCT m.id, m.title
+    FROM popular_movies m
+    JOIN reviews r ON m.id = r.movie_id
+    UNION
+    SELECT DISTINCT m.id, m.title
+    FROM top_rated_movies m
+    JOIN reviews r ON m.id = r.movie_id
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("DB error fetching movies with reviews:", err);
+      return res.status(500).json([]);
+    }
+    res.json(results);
+  });
+});
+
+
 
 
 // Call once after DB connection
@@ -389,13 +473,17 @@ db.connect(async (err) => {
   }
   console.log("Connected to MySQL database");
 
-  // Populate popular movies (if you have that)
   await populatePopularMovies();
-
-  // Populate top rated movies
   await populateTopRatedMovies();
-});
 
+  // Fetch movies from DB to get their IDs
+  const [popularMovies] = await db.promise().query("SELECT * FROM popular_movies");
+  const [topRatedMovies] = await db.promise().query("SELECT * FROM top_rated_movies");
+
+  // Combine movies and populate reviews
+  const allMovies = [...popularMovies, ...topRatedMovies];
+  await populateReviewsForMovies(allMovies);
+});
 
 
 
