@@ -22,6 +22,8 @@ export default function Navbar({ isScrolled }) {
     { name: "TV Shows", link: "/tv" },
     { name: "Movies", link: "/movies" },
     { name: "My List", link: "/mylist" },
+    { name: "Popular", link: "/popular" },
+    { name: "Payment", link: "/payment" },
   ];
 
 const handleSignOut = async () => {
@@ -57,26 +59,7 @@ const handleSignOut = async () => {
         <div className="right flex a-center">
           {isLoggedIn ? (
             <>
-              <div className={`search ${showSearch ? "show-search" : ""}`}>
-                <button
-                  onFocus={() => setShowSearch(true)}
-                  onBlur={() => {
-                    if (!inputHover) setShowSearch(false);
-                  }}
-                >
-                  <FaSearch />
-                </button>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  onMouseEnter={() => setInputHover(true)}
-                  onMouseLeave={() => setInputHover(false)}
-                  onBlur={() => {
-                    setShowSearch(false);
-                    setInputHover(false);
-                  }}
-                />
-              </div>
+              
               <button onClick={handleSignOut}>
                 <FaPowerOff />
               </button>
