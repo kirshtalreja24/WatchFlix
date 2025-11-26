@@ -222,37 +222,4 @@ app.get("/popular-movies", (req, res) => {
   });
 });
 
-app.get("/get-payment", (req, res) => {
 
-  console.log("session data:", req.session);
-  console.log("Fetching payment info for user:", req.session.user);
-  const user = req.session.user;
-
-  if (!user) return res.status(401).json({ error: "Not logged in" });
-
-  const query = `
-    SELECT p.*, u.email, u.name
-    FROM payments p
-    JOIN users u ON u.id = p.user_id
-    WHERE u.id = ?
-    LIMIT 1
-  `;
-
-  db.query(query, [user.id], (err, results) => {
-    if (err) return res.status(500).json({ error: "DB error", err });
-    if (results.length === 0) return res.status(404).json({ error: "No subscription found" });
-
-    const payment = results[0];
-    const benefits = payment.benefits ? payment.benefits.split(",") : [];
-
-    res.json({
-      plan: payment.plan,
-      price: payment.price,
-      benefits,
-      start_date: payment.start_date,
-      end_date: payment.end_date,
-      email: payment.email,
-      name: payment.name,
-    });
-  });
-});

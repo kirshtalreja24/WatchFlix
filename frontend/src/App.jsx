@@ -9,7 +9,6 @@ import Movies from "./pages/Movies";
 import TVShows from "./pages/TVShows";
 import UserListedMovies from "./pages/UserListedMovies";
 import Popular from "./pages/Popular";
-import Payment from "./pages/Payment";
 
 
 function App() {
@@ -78,15 +77,6 @@ function App() {
         />
 
         
-        <Route
-          path="/payment"
-          element={
-            <ProtectedRoute>
-              <Payment /> 
-            </ProtectedRoute>
-          }
-        />
-
       </Routes>
     </BrowserRouter>
   );

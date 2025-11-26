@@ -23,7 +23,7 @@ export default function Navbar({ isScrolled }) {
     { name: "Movies", link: "/movies" },
     { name: "My List", link: "/mylist" },
     { name: "Popular", link: "/popular" },
-    { name: "Payment", link: "/payment" },
+    
   ];
 
 const handleSignOut = async () => {
