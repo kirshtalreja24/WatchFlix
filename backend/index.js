@@ -223,3 +223,71 @@ app.get("/popular-movies", (req, res) => {
 });
 
 
+
+
+app.get("/plans", (req, res) => {
+  const plans = [
+    {
+      plan: "Standard",
+      price: 9.99,
+      benefits: ["HD streaming", "1 device", "basic support"],
+    },
+    {
+      plan: "Premium",
+      price: 14.99,
+      benefits: ["Full HD", "2 devices", "priority support"],
+    },
+    {
+      plan: "VIP",
+      price: 19.99,
+      benefits: ["Ultra HD", "4 devices", "premium support"],
+    },
+  ];
+  res.json(plans);
+});
+
+
+
+// Subscribe route
+app.post("/subscribe", (req, res) => {
+  const { userId, plan, price, benefits } = req.body;
+  if (!userId || !plan || !price || !benefits)
+    return res.status(400).json({ message: "All fields are required" });
+
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setMonth(endDate.getMonth() + 1); // 1-month subscription
+
+  const insertQuery = `
+    INSERT INTO subscriptions (user_id, plan, price, benefits, start_date, end_date)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE plan = VALUES(plan), price = VALUES(price), benefits = VALUES(benefits), start_date = VALUES(start_date), end_date = VALUES(end_date)
+  `;
+
+  db.query(
+    insertQuery,
+    [userId, plan, price, JSON.stringify(benefits), startDate, endDate],
+    (err, result) => {
+      if (err) return res.status(500).json({ message: "DB error", error: err });
+      res.json({ message: "Subscription updated successfully" });
+    }
+  );
+});
+
+// Fetch user's current subscription
+app.get("/subscription/:userId", (req, res) => {
+  const { userId } = req.params;
+
+  const query = "SELECT * FROM subscriptions WHERE user_id = ?";
+  db.query(query, [userId], (err, results) => {
+    if (err) return res.status(500).json({ message: "DB error", error: err });
+    if (results.length === 0) return res.json(null);
+    const subscription = results[0];
+    subscription.benefits = JSON.parse(subscription.benefits);
+    res.json(subscription);
+  });
+});
+
+
+
+
