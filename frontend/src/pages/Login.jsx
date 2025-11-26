@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; 
+import axios from "axios";
 import BackgroundImage from "../components/Backgroundimage";
 import Header from "../components/Header";
 
@@ -9,7 +9,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(""); 
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async () => {
@@ -20,14 +20,18 @@ function Login() {
 
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/login", {
-        email,
-        password,
-      });
+      const res = await axios.post(
+        "http://localhost:5000/login",
+        { email, password },
+        { withCredentials: true } 
+      );
 
       setMessage(res.data.message);
-      // Optionally save user info in localStorage
+
+      // Save user info in localStorage (optional)
       localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      // Redirect to home
       navigate("/home");
     } catch (err) {
       setMessage(err.response?.data?.message || "Login failed");
@@ -79,27 +83,21 @@ const Container = styled.div`
     height: 100vh;
     width: 100vw;
     background-color: rgba(0, 0, 0, 0.5);
-    grid-template-rows: 15vh 85vh;
-
     .form-container {
       gap: 2rem;
       height: 85vh;
-
       .form {
         padding: 2rem;
         background-color: #000000b0;
         width: 25vw;
         gap: 2rem;
         color: white;
-
         .container {
           gap: 2rem;
-
           input {
             padding: 0.5rem 1rem;
             width: 15rem;
           }
-
           button {
             padding: 0.5rem 1rem;
             background-color: #e50914;
@@ -109,7 +107,6 @@ const Container = styled.div`
             border-radius: 0.2rem;
             font-weight: bolder;
             font-size: 1.05rem;
-
             &:disabled {
               background-color: #8a8a8a;
               cursor: not-allowed;

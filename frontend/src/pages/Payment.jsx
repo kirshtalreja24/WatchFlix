@@ -10,9 +10,10 @@ export default function Payment() {
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/payment", {
-          withCredentials: true, // important!
-        });
+        const res = await axios.get(
+            "http://localhost:5000/get-payment",
+             { withCredentials: true}
+        );
         setSubscription(res.data);
       } catch (err) {
         console.error(err);

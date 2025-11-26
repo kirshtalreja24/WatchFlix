@@ -10,7 +10,7 @@ const port = 5000;
 // Middleware
 app.use(cors({
   origin: "http://localhost:5173",
-  credentials: true, // important to allow cookies
+  credentials: true, 
 }));
 
 app.use(methodOverride("_method"));
@@ -43,6 +43,24 @@ db.connect(err => {
 });
 
 
+// Login route
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ message: "All fields required" });
+
+  const query = "SELECT * FROM users WHERE email = ? AND password = ?";
+  db.query(query, [email, password], (err, result) => {
+    if (err) return res.status(500).json({ message: "DB error", error: err });
+    if (result.length === 0) return res.status(401).json({ message: "Invalid credentials" });
+
+    // Save user info in session
+    req.session.user = { id: result[0].id, email: result[0].email };
+    res.json({ message: "Login successful", user: req.session.user });
+    console.log("Session after login:", req.session);
+
+  });
+});
+
 // Signup route
 app.post("/signup", (req, res) => {
   const { email, password } = req.body;
@@ -59,21 +77,7 @@ app.post("/signup", (req, res) => {
 });
 
 
-// Login route
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ message: "All fields required" });
 
-  const query = "SELECT * FROM users WHERE email = ? AND password = ?";
-  db.query(query, [email, password], (err, result) => {
-    if (err) return res.status(500).json({ message: "DB error", error: err });
-    if (result.length === 0) return res.status(401).json({ message: "Invalid credentials" });
-
-    // Save user info in session
-    req.session.user = { id: result[0].id, email: result[0].email };
-    res.json({ message: "Login successful", user: req.session.user });
-  });
-});
 
 // Logout route
 app.post("/logout", (req, res) => {
@@ -218,7 +222,8 @@ app.get("/popular-movies", (req, res) => {
   });
 });
 
-app.get("/payment", (req, res) => {
+app.get("/get-payment", (req, res) => {
+
   console.log("session data:", req.session);
   console.log("Fetching payment info for user:", req.session.user);
   const user = req.session.user;
