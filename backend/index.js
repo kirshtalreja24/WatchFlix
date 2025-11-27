@@ -428,8 +428,12 @@ app.get("/reviews/:movieId", (req, res) => {
     res.json(results);
   });
 });
+
+
 // Fetch movies that have reviews
 // Fetch movies that have at least one review
+
+
 app.get("/movies-with-reviews", (req, res) => {
   const query = `
     SELECT DISTINCT m.id, m.title
@@ -446,6 +450,57 @@ app.get("/movies-with-reviews", (req, res) => {
       console.error("DB error fetching movies with reviews:", err);
       return res.status(500).json([]);
     }
+    res.json(results);
+  });
+});
+// Get all available movies to rent
+app.get("/rental/movies", (req, res) => {
+  const sql = "SELECT * FROM movies WHERE is_available = TRUE";
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("DB error fetching available movies:", err);
+      return res.status(500).json([]);
+    }
+    res.json(results);
+  });
+});
+
+
+app.post("/rental/rent", (req, res) => {
+  const { userId, movieId } = req.body;
+
+  const sql = "INSERT INTO rentals (user_id, movie_id) VALUES (?, ?)";
+
+  db.query(sql, [userId, movieId], (err) => {
+    if (err) return res.status(500).json({ error: err });
+
+    res.json({ message: "Movie rented successfully!" });
+  });
+});
+app.post("/rental/return", (req, res) => {
+  const { rentalId } = req.body;
+
+  const sql = "UPDATE rentals SET return_date = NOW() WHERE id = ?";
+
+  db.query(sql, [rentalId], (err) => {
+    if (err) return res.status(500).json({ error: err });
+
+    res.json({ message: "Movie returned successfully!" });
+  });
+});
+app.get("/rental/history/:userId", (req, res) => {
+  const sql = `
+    SELECT r.id, m.title, m.poster, r.rented_at, r.return_date 
+    FROM rentals r 
+    JOIN movies m ON r.movie_id = m.id
+    WHERE r.user_id = ?
+    ORDER BY r.rented_at DESC
+  `;
+
+  db.query(sql, [req.params.userId], (err, results) => {
+    if (err) return res.status(500).json({ error: err });
+
     res.json(results);
   });
 });

@@ -13,18 +13,17 @@ import Payment from "./pages/Payment";
 import TopRated from "./pages/Toprated";
 import Reviews from "./pages/Reviews";
 import ReviewsPage from "./pages/ReviewsPage";
+import Rentals from "./pages/Rentals";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* PUBLIC ROUTES */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* PROTECTED ROUTES */}
         <Route
           path="/home"
           element={
@@ -100,9 +99,14 @@ function App() {
           }
         />
 
-
-     
-
+         <Route
+         path="/rental"
+         element={
+           <ProtectedRoute>
+            <Rentals />
+         </ProtectedRoute>
+          }
+        />
 
       </Routes>
     </BrowserRouter>
