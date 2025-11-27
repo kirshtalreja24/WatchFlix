@@ -10,6 +10,9 @@ import TVShows from "./pages/TVShows";
 import UserListedMovies from "./pages/UserListedMovies";
 import Popular from "./pages/Popular";
 import Payment from "./pages/Payment";
+import TopRated from "./pages/Toprated";
+import Reviews from "./pages/Reviews";
+import ReviewsPage from "./pages/ReviewsPage";
 
 function App() {
   return (
@@ -57,15 +60,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+          <Route path="/reviews" element={<ReviewsPage />} />
 
-        <Route
-          path="/player"
-          element={
-            <ProtectedRoute>
-              <Player />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/player/:movieId" element={<Player />} />
+
 
         <Route
           path="/popular"
@@ -76,15 +74,36 @@ function App() {
           }
         />
         <Route
+          path="/reviews/:movieId"
+          element={
+            <ProtectedRoute>
+             <Reviews />
+          </ProtectedRoute>
+          }
+          />
+
+        
+        <Route
           path="/payment"
           element={
             <ProtectedRoute>
-              <Payment />
+              <Payment /> 
             </ProtectedRoute>
           }
         />
+        <Route
+         path="/toprated"
+         element={
+           <ProtectedRoute>
+            <TopRated />
+         </ProtectedRoute>
+          }
+        />
 
-        
+
+     
+
+
       </Routes>
     </BrowserRouter>
   );

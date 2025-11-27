@@ -1,0 +1,49 @@
+CREATE TABLE subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    plan VARCHAR(50) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    benefits TEXT,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+select* from subscriptions;
+ALTER TABLE subscriptions DROP PRIMARY KEY;
+drop table subscriptions;
+CREATE TABLE subscriptions (
+  user_id INT PRIMARY KEY,
+  plan VARCHAR(50),
+  price DECIMAL(10,2),
+  benefits JSON,
+  start_date DATETIME,
+  end_date DATETIME
+);
+select* from subscriptions;
+CREATE TABLE top_rated_movies (
+    id INT PRIMARY KEY,
+    title VARCHAR(255),
+    image VARCHAR(500),
+    genres VARCHAR(255),
+    vote_average DECIMAL(3,1)
+);
+drop table top_rated_movies;
+CREATE TABLE top_rated_movies (
+  id INT PRIMARY KEY,
+  title VARCHAR(255),
+  image VARCHAR(500),
+  genres VARCHAR(255),
+  vote_average FLOAT
+);
+select * from top_rated_movies;
+select* from subscriptions;
+CREATE TABLE IF NOT EXISTS reviews (
+    id VARCHAR(50) PRIMARY KEY,
+    movie_id INT NOT NULL,
+    author VARCHAR(100),
+    content TEXT,
+    rating FLOAT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+SELECT * FROM reviews LIMIT 10;
+SELECT * FROM reviews WHERE movie_id = 122;

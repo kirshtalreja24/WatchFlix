@@ -2,13 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import logo from "../assets/logo.png";
-import { FaPowerOff, FaSearch } from "react-icons/fa";
+import { FaPowerOff } from "react-icons/fa";
 import axios from "axios";
 
 export default function Navbar({ isScrolled }) {
   const navigate = useNavigate();
-  const [showSearch, setShowSearch] = useState(false);
-  const [inputHover, setInputHover] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check login status on mount
@@ -24,9 +22,11 @@ export default function Navbar({ isScrolled }) {
     { name: "My List", link: "/mylist" },
     { name: "Popular", link: "/popular" },
     { name: "Payment", link: "/payment" },
+    { name: "Top Rated", link: "/toprated" },
+    { name: "Reviews", link: "/reviews" }, // new reviews button
   ];
 
-const handleSignOut = async () => {
+  const handleSignOut = async () => {
     try {
       await axios.post("http://localhost:5000/logout", {}, { withCredentials: true });
       localStorage.removeItem("user");
@@ -35,18 +35,18 @@ const handleSignOut = async () => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
-};
+  };
 
   return (
     <Container>
-      <nav className={`${isScrolled ? "scrolled" : ""} flex`}>
-        <div className="left flex a-center">
-          <div className="brand flex a-center j-center">
+      <nav className={isScrolled ? "scrolled" : ""}>
+        <div className="left">
+          <div className="brand">
             <img src={logo} alt="Logo" />
           </div>
 
           {isLoggedIn && (
-            <ul className="links flex">
+            <ul className="links">
               {links.map(({ name, link }) => (
                 <li key={name}>
                   <Link to={link}>{name}</Link>
@@ -56,20 +56,21 @@ const handleSignOut = async () => {
           )}
         </div>
 
-        <div className="right flex a-center">
+        <div className="right">
           {isLoggedIn ? (
-            <>
-              
-              <button onClick={handleSignOut}>
-                <FaPowerOff />
-              </button>
-            </>
+            <button onClick={handleSignOut}>
+              <FaPowerOff />
+            </button>
           ) : (
             <>
-              <Link to="/login" className="auth-btn">Login</Link>
-              <Link to="/signup" className="auth-btn">Signup</Link>
+              <Link to="/login" className="auth-btn">
+                Login
+              </Link>
+              <Link to="/signup" className="auth-btn">
+                Signup
+              </Link>
             </>
-          )} 
+          )}
         </div>
       </nav>
     </Container>
@@ -77,58 +78,63 @@ const handleSignOut = async () => {
 }
 
 const Container = styled.div`
-  .scrolled {
-    background-color: black;
-  }
   nav {
-    position: sticky;
-    top: 0;
-    height: 6.5rem;
-    width: 100%;
-    justify-content: space-between;
     position: fixed;
     top: 0;
-    z-index: 2;
-    padding: 0 4rem;
+    width: 100%;
+    height: 6.5rem;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    padding: 0 4rem;
+    z-index: 1000;
     transition: 0.3s ease-in-out;
 
+    &.scrolled {
+      background-color: black;
+    }
+
     .left {
+      display: flex;
+      align-items: center;
       gap: 2rem;
-      .brand {
-        img {
-          height: 4rem;
-        }
+
+      .brand img {
+        height: 4rem;
       }
+
       .links {
-        list-style-type: none;
-        gap: 2rem;
+        list-style: none;
         display: flex;
-        li {
-          a {
-            color: white;
-            text-decoration: none;
+        align-items: center;
+        gap: 1.5rem;
+        margin: 0;
+        padding: 0;
+
+        li a {
+          color: white;
+          text-decoration: none;
+          font-size: 1rem;
+          padding: 0.2rem 0.5rem;
+          &:hover {
+            color: #f34242;
           }
         }
       }
     }
 
     .right {
-      gap: 1rem;
       display: flex;
       align-items: center;
+      gap: 1rem;
 
       button {
-        background-color: transparent;
+        background: none;
         border: none;
         cursor: pointer;
-        &:focus {
-          outline: none;
-        }
-        svg {
-          color: #f34242;
-          font-size: 1.2rem;
-        }
+        color: #f34242;
+        font-size: 1.2rem;
       }
 
       .auth-btn {
@@ -141,49 +147,6 @@ const Container = styled.div`
         &:hover {
           background-color: white;
           color: black;
-        }
-      }
-
-      .search {
-        display: flex;
-        gap: 0.4rem;
-        align-items: center;
-        justify-content: center;
-        padding: 0.2rem;
-        padding-left: 0.5rem;
-        button {
-          background-color: transparent;
-          border: none;
-          &:focus {
-            outline: none;
-          }
-          svg {
-            color: white;
-            font-size: 1.2rem;
-          }
-        }
-        input {
-          width: 0;
-          opacity: 0;
-          visibility: hidden;
-          transition: 0.5s ease-in-out;
-          background-color: transparent;
-          border: none;
-          color: white;
-          &:focus {
-            outline: none;
-          }
-        }
-      }
-
-      .show-search {
-        border: 1px solid white;
-        background-color: rgba(0, 0, 0, 0.6);
-        input {
-          width: 100%;
-          opacity: 1;
-          visibility: visible;
-          padding: 0.3rem;
         }
       }
     }

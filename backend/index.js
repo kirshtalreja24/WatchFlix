@@ -10,7 +10,7 @@ const port = 5000;
 // Middleware
 app.use(cors({
   origin: "http://localhost:5173",
-  credentials: true, 
+  credentials: true, // important to allow cookies
 }));
 
 app.use(methodOverride("_method"));
@@ -34,32 +34,8 @@ const db = mysql.createConnection({
   port: 3306,
 });
 
-db.connect(err => {
-  if (err) {
-    console.error("DB connection error:", err);
-    return;
-  }
-  console.log("Connected to MySQL database");
-});
 
 
-// Login route
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ message: "All fields required" });
-
-  const query = "SELECT * FROM users WHERE email = ? AND password = ?";
-  db.query(query, [email, password], (err, result) => {
-    if (err) return res.status(500).json({ message: "DB error", error: err });
-    if (result.length === 0) return res.status(401).json({ message: "Invalid credentials" });
-
-    // Save user info in session
-    req.session.user = { id: result[0].id, email: result[0].email };
-    res.json({ message: "Login successful", user: req.session.user });
-    console.log("Session after login:", req.session);
-
-  });
-});
 
 // Signup route
 app.post("/signup", (req, res) => {
@@ -77,7 +53,21 @@ app.post("/signup", (req, res) => {
 });
 
 
+// Login route
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ message: "All fields required" });
 
+  const query = "SELECT * FROM users WHERE email = ? AND password = ?";
+  db.query(query, [email, password], (err, result) => {
+    if (err) return res.status(500).json({ message: "DB error", error: err });
+    if (result.length === 0) return res.status(401).json({ message: "Invalid credentials" });
+
+    // Save user info in session
+    req.session.user = { id: result[0].id, email: result[0].email };
+    res.json({ message: "Login successful", user: req.session.user });
+  });
+});
 
 // Logout route
 app.post("/logout", (req, res) => {
@@ -204,10 +194,51 @@ app.delete("/liked-movies", (req, res) => {
 });
 
 
+const axios = require("axios");
 
+// Replace with your TMDB API key
+const TMDB_API_KEY = "f5fd5780bce0afc3ee345dc383adc165";
+
+// Function to fetch popular movies from TMDB and populate the DB
+async function populatePopularMovies() {
+  try {
+    // Fetch popular movies from TMDB
+    const response = await axios.get(
+      `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`
+    );
+
+    const movies = response.data.results;
+
+    if (!movies || movies.length === 0) return console.log("No movies fetched");
+
+    // Clear existing data
+    await db.promise().query("DELETE FROM popular_movies");
+
+    // Insert each movie into the table
+    const insertQuery = `
+      INSERT INTO popular_movies (id, title, image, genres)
+      VALUES (?, ?, ?, ?)
+    `;
+
+    for (const movie of movies) {
+      const image = movie.poster_path
+        ? "https://image.tmdb.org/t/p/w500" + movie.poster_path
+        : "";
+      const genres = movie.genre_ids ? movie.genre_ids.join(",") : "";
+
+      await db
+        .promise()
+        .query(insertQuery, [movie.id, movie.title, image, genres]);
+    }
+
+    console.log("Popular movies table populated successfully!");
+  } catch (err) {
+    console.error("Error populating popular movies:", err);
+  }
+}
 app.get("/popular-movies", (req, res) => {
   const query = "SELECT * FROM popular_movies";
-  
+
   db.query(query, (err, results) => {
     if (err) return res.status(500).json({ error: "DB error", err });
 
@@ -221,73 +252,227 @@ app.get("/popular-movies", (req, res) => {
     res.json(formatted);
   });
 });
-
-
-
-
+// Subscribe route
 app.get("/plans", (req, res) => {
   const plans = [
     {
       plan: "Standard",
       price: 9.99,
-      benefits: ["HD streaming", "1 device", "basic support"],
+      benefits: ["HD streaming", "1 device", "Basic Support"]
     },
     {
       plan: "Premium",
       price: 14.99,
-      benefits: ["Full HD", "2 devices", "priority support"],
+      benefits: ["Full HD", "2 devices", "Priority Support"]
     },
     {
       plan: "VIP",
       price: 19.99,
-      benefits: ["Ultra HD", "4 devices", "premium support"],
-    },
+      benefits: ["4K Ultra HD", "4 devices", "24/7 Support"]
+    }
   ];
+
   res.json(plans);
 });
 
-
-
-// Subscribe route
 app.post("/subscribe", (req, res) => {
   const { userId, plan, price, benefits } = req.body;
-  if (!userId || !plan || !price || !benefits)
-    return res.status(400).json({ message: "All fields are required" });
 
-  const startDate = new Date();
-  const endDate = new Date();
-  endDate.setMonth(endDate.getMonth() + 1); // 1-month subscription
-
-  const insertQuery = `
-    INSERT INTO subscriptions (user_id, plan, price, benefits, start_date, end_date)
-    VALUES (?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE plan = VALUES(plan), price = VALUES(price), benefits = VALUES(benefits), start_date = VALUES(start_date), end_date = VALUES(end_date)
+  const query = `
+    INSERT INTO subscriptions (user_id, plan, price, benefits)
+    VALUES (?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE 
+      plan = VALUES(plan),
+      price = VALUES(price),
+      benefits = VALUES(benefits)
   `;
 
-  db.query(
-    insertQuery,
-    [userId, plan, price, JSON.stringify(benefits), startDate, endDate],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: "DB error", error: err });
-      res.json({ message: "Subscription updated successfully" });
-    }
-  );
+  db.query(query, [userId, plan, price, JSON.stringify(benefits)], (err) => {
+    if (err) return res.status(500).json({ message: "Database error" });
+
+    res.json({ message: `Successfully subscribed to ${plan}` });
+  });
 });
+app.get("/user-subscription/:id", (req, res) => {
+  const userId = req.params.id;
 
-// Fetch user's current subscription
-app.get("/subscription/:userId", (req, res) => {
-  const { userId } = req.params;
+  const query = `SELECT plan FROM subscriptions WHERE user_id = ?`;
 
-  const query = "SELECT * FROM subscriptions WHERE user_id = ?";
   db.query(query, [userId], (err, results) => {
-    if (err) return res.status(500).json({ message: "DB error", error: err });
-    if (results.length === 0) return res.json(null);
-    const subscription = results[0];
-    subscription.benefits = JSON.parse(subscription.benefits);
-    res.json(subscription);
+    if (err) return res.status(500).json({ plan: null });
+
+    if (results.length === 0) {
+      return res.json({ plan: null });
+    }
+
+    res.json({ plan: results[0].plan });
   });
 });
 
+
+
+async function populateTopRatedMovies() {
+  try {
+    const response = await axios.get(
+      `https://api.themoviedb.org/3/discover/movie`, {
+        params: {
+          api_key: TMDB_API_KEY,
+          include_adult: false,
+          include_video: false,
+          language: "en-US",
+          page: 1,
+          sort_by: "vote_average.desc",
+          without_genres: "99,10755",
+          "vote_count.gte": 200
+        }
+      }
+    );
+
+    const movies = response.data.results;
+    const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
+
+    
+
+    const insertQuery = `
+      INSERT INTO top_rated_movies (id, title, image, genres, vote_average)
+      VALUES (?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE title = VALUES(title), image = VALUES(image), genres = VALUES(genres), vote_average = VALUES(vote_average)
+    `;
+
+    for (const movie of movies) {
+      const image = movie.poster_path ? IMAGE_BASE_URL + movie.poster_path : "";
+      const genres = movie.genre_ids ? movie.genre_ids.join(",") : "";
+      await db.promise().query(insertQuery, [movie.id, movie.title, image, genres, movie.vote_average]);
+    }
+
+    console.log("Top rated movies table populated successfully!");
+  } catch (err) {
+    console.error("Error populating top rated movies:", err);
+  }
+}
+app.get("/top-rated-movies", (req, res) => {
+  const query = "SELECT * FROM top_rated_movies ORDER BY vote_average DESC LIMIT 20";
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).json({ error: "DB error", err });
+
+    const formatted = results.map((movie) => ({
+      ...movie,
+      genres: movie.genres ? movie.genres.split(",").map((g) => g.trim()) : [],
+    }));
+
+    res.json(formatted);
+  });
+});
+
+
+const populateReviewsForMovies = async (movies) => {
+  const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
+
+  for (const movie of movies) {
+    try {
+      const response = await axios.get(
+        `https://api.themoviedb.org/3/movie/${movie.id}/reviews`,
+        {
+          params: {
+            api_key: TMDB_API_KEY,
+            language: "en-US",
+            page: 1
+          }
+        }
+      );
+
+      const reviews = response.data.results;
+
+      if (!reviews || reviews.length === 0) continue;
+
+      for (const r of reviews) {
+        const insertQuery = `
+          INSERT INTO reviews (id, movie_id, author, content, rating)
+          VALUES (?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE content = VALUES(content), rating = VALUES(rating)
+        `;
+        await db.promise().query(insertQuery, [
+          r.id,
+          movie.id,
+          r.author,
+          r.content,
+          r.author_details?.rating ?? null
+        ]);
+      }
+
+      console.log(`Inserted ${reviews.length} reviews for movie ID ${movie.id}`);
+    } catch (err) {
+      console.error(`Error fetching reviews for movie ${movie.id}:`, err);
+    }
+  }
+};
+
+// Function to fetch reviews for a list of movies and insert into MySQL
+
+app.get("/reviews/:movieId", (req, res) => {
+  const { movieId } = req.params;
+
+  const query = "SELECT id, author, content, rating FROM reviews WHERE movie_id = ?";
+  db.query(query, [movieId], (err, results) => {
+    if (err) {
+      console.error("DB error fetching reviews:", err);
+      return res.json([]);
+    }
+
+    if (results.length === 0) {
+      console.log(`No reviews found for movieId ${movieId}`);
+    } else {
+      console.log(`Fetched ${results.length} reviews for movieId ${movieId}`);
+    }
+
+    res.json(results);
+  });
+});
+// Fetch movies that have reviews
+// Fetch movies that have at least one review
+app.get("/movies-with-reviews", (req, res) => {
+  const query = `
+    SELECT DISTINCT m.id, m.title
+    FROM popular_movies m
+    JOIN reviews r ON m.id = r.movie_id
+    UNION
+    SELECT DISTINCT m.id, m.title
+    FROM top_rated_movies m
+    JOIN reviews r ON m.id = r.movie_id
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("DB error fetching movies with reviews:", err);
+      return res.status(500).json([]);
+    }
+    res.json(results);
+  });
+});
+
+
+
+
+// Call once after DB connection
+// Your existing db.connect() at the top
+db.connect(async (err) => {
+  if (err) {
+    console.error("DB connection error:", err);
+    return;
+  }
+  console.log("Connected to MySQL database");
+
+  await populatePopularMovies();
+  await populateTopRatedMovies();
+
+  // Fetch movies from DB to get their IDs
+  const [popularMovies] = await db.promise().query("SELECT * FROM popular_movies");
+  const [topRatedMovies] = await db.promise().query("SELECT * FROM top_rated_movies");
+
+  // Combine movies and populate reviews
+  const allMovies = [...popularMovies, ...topRatedMovies];
+  await populateReviewsForMovies(allMovies);
+});
 
 
 
